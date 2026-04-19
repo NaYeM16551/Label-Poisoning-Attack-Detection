@@ -1,0 +1,19 @@
+# Override-only YAML focused on the FLIP attack stage.
+# Loaded together with default.yaml by scripts/02_reproduce_flip.sh.
+
+attack:
+  type: "flip"
+  trigger: "sinusoidal"
+  source_class: 9                  # truck
+  target_class: 4                  # deer
+  num_flips: 1000                  # 2% poisoning rate
+  # Path to FLIP repo's precomputed soft labels.
+  # Update this once you have cloned and downloaded their assets.
+  flip_labels_path: "./external/FLIP/precomputed/cifar10_sinusoidal_soft_labels.pt"
+  poisoned_data_dir: "./data/poisoned"
+
+# When `type: random` you can also specify a per-rate sweep:
+random_baseline:
+  rates: [0.005, 0.01, 0.02, 0.05]
+  source_class: 9
+  target_class: 4

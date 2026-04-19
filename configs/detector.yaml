@@ -1,0 +1,13 @@
+# Override-only YAML for detection-stage hyperparameters.
+
+detector:
+  k_values: [5, 10, 20, 50, 100, 200]
+  default_k: 20
+  distance_metric: "cosine"
+  scoring: "disagreement"          # also runs weighted variant
+
+# Whether to also run baseline detectors (loss-based, random, supervised k-NN)
+baselines:
+  loss: true
+  random: true
+  supervised_knn: true

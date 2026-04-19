@@ -1,0 +1,82 @@
+# ============================================
+# Master config for all experiments.
+# Override individual fields via command line or by passing
+# a different YAML to scripts/04_run_detection.py etc.
+# ============================================
+
+seed: 42
+device: "cuda"        # set to "cpu" if no GPU available
+num_workers: 4
+
+# --------------------------------------------
+# Dataset
+# --------------------------------------------
+dataset:
+  name: "cifar10"     # cifar10 | cifar100
+  data_dir: "./data/raw"
+  num_classes: 10
+
+# --------------------------------------------
+# FLIP attack
+# --------------------------------------------
+attack:
+  type: "flip"                      # flip | random | none
+  trigger: "sinusoidal"             # sinusoidal | turner | pixel
+  source_class: 9                   # truck in CIFAR-10
+  target_class: 4                   # deer in CIFAR-10
+  num_flips: 1000                   # 2% of 50K
+  flip_labels_path: "./external/FLIP/precomputed/cifar10_sinusoidal_soft_labels.pt"
+  poisoned_data_dir: "./data/poisoned"
+
+# --------------------------------------------
+# SSL feature extraction
+# --------------------------------------------
+features:
+  encoder: "dinov2_vits14"          # dinov2_vits14 | dinov2_vitb14 | simclr_r50
+  feature_dim: 384
+  batch_size: 256
+  cache_dir: "./data/features"
+  normalize: true                   # L2 normalise features
+
+# --------------------------------------------
+# Detector
+# --------------------------------------------
+detector:
+  k_values: [5, 10, 20, 50, 100]
+  default_k: 20
+  distance_metric: "cosine"          # cosine | euclidean
+  scoring: "disagreement"            # disagreement | weighted_disagreement
+
+# --------------------------------------------
+# Training (mitigation)
+# --------------------------------------------
+training:
+  model: "resnet18"
+  epochs: 200
+  batch_size: 256
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 0.0002
+  nesterov: true
+  lr_schedule:
+    milestones: [75, 150]
+    gamma: 0.1
+
+# --------------------------------------------
+# Evaluation
+# --------------------------------------------
+evaluation:
+  metrics: ["auroc", "auprc", "precision_at_k", "recall_at_k"]
+  poisoning_rates: [0.005, 0.01, 0.02, 0.05]
+
+# --------------------------------------------
+# Mitigation
+# --------------------------------------------
+mitigation:
+  removal_fraction: 0.02             # remove top-x% suspicious samples
+  downweight_temperature: 1.0
+
+# --------------------------------------------
+# Output
+# --------------------------------------------
+output_dir: "./results"

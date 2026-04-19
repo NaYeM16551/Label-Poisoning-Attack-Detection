@@ -1,0 +1,38 @@
+# Datasets
+data/raw/
+data/features/*.npy
+data/features/*.pt
+data/poisoned/*.pt
+data/poisoned/*.npy
+
+# External codebases (cloned at setup time)
+external/FLIP/
+
+# Experiment outputs
+results/
+wandb/
+.wandb/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.coverage
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
