@@ -24,13 +24,17 @@ bash scripts/07_run_full_pipeline.sh
 Individual stages can be run with the numbered scripts under `scripts/`. All
 behaviour is driven by YAML configs under `configs/`.
 
+The default workflow is FLIP-only and targets the attack from
+`Label_Poisoning_is_all_you_need.pdf`. A random label-flip attack remains in
+the repository only as an optional baseline for side comparisons.
+
 ## Layout
 
 ```
 Detection/
 |-- configs/        YAML experiment configurations
 |-- src/            Library code (importable as `from src...`)
-|   |-- attacks/    FLIP wrapper + random baseline
+|   |-- attacks/    FLIP wrapper + optional random baseline
 |   |-- features/   SSL & supervised feature extractors + validation
 |   |-- detectors/  k-NN, loss, random detectors + scoring helpers
 |   |-- mitigation/ Remove/downweight + retrain
@@ -47,8 +51,8 @@ Detection/
 
 ## Method overview
 
-1. **Attack:** load FLIP-poisoned labels (or generate random-flip baseline) and
-   wrap CIFAR-10 with a `PoisonedCIFAR10` dataset that tracks ground truth.
+1. **Attack:** load FLIP-poisoned labels from the FLIP codebase and wrap
+   CIFAR-10 with a `PoisonedCIFAR10` dataset that tracks ground truth.
 2. **Features:** extract embeddings with a frozen SSL encoder
    (`dinov2_vits14` by default). Crucially, these features never see the
    poisoned labels.
@@ -57,6 +61,10 @@ Detection/
 4. **Mitigate:** remove (or downweight) the suspicious samples and retrain a
    classifier; report Clean Test Accuracy (CTA) and Poison Test Accuracy
    (PTA).
+
+Optional only: `bash scripts/02_reproduce_flip.sh configs/default.yaml --include-random-baseline`
+will also generate a random label-flip comparator. That comparator is not part
+of the main thesis defense path.
 
 See `Implementation_Blueprint_English.md` for the full design rationale,
 expected results at each checkpoint, and the week-by-week execution plan.

@@ -6,6 +6,6 @@ matrix:
   encoders: ["dinov2_vits14", "simclr_r50"]
   poisoning_rates: [0.005, 0.01, 0.02, 0.05]
   k_values: [5, 10, 20, 50, 100]
-  attack_types: ["flip", "random"]
+  attack_types: ["flip"]  # add "random" manually only for optional baselines
 
 seeds: [42, 123, 2024]

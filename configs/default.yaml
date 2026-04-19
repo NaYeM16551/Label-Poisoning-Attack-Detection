@@ -20,7 +20,7 @@ dataset:
 # FLIP attack
 # --------------------------------------------
 attack:
-  type: "flip"                      # flip | random | none
+  type: "flip"                      # keep as "flip" for the main thesis defense
   trigger: "sinusoidal"             # sinusoidal | turner | pixel
   source_class: 9                   # truck in CIFAR-10
   target_class: 4                   # deer in CIFAR-10

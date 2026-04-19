@@ -6,6 +6,9 @@ Reads every ``*_metrics.json`` and ``*_scores.npz`` under
     * k-ablation curve (AUROC vs k)
     * poisoning-rate ablation (AUROC vs %)
     * combined ROC / PR curves
+
+By default this script only aggregates FLIP attack runs. Random label-flip
+baselines are optional comparators and are excluded unless explicitly included.
 """
 from __future__ import annotations
 
@@ -40,6 +43,12 @@ RATE_PATTERN = re.compile(r"_(\d+)$")  # last "_<num>" in stem == num_flips
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="configs/default.yaml")
+    parser.add_argument(
+        "--attack-prefix",
+        default="flip",
+        help="Filename prefix to aggregate from results/detection "
+             "(default: flip). Use '*' to include every attack type.",
+    )
     return parser.parse_args()
 
 
@@ -50,7 +59,14 @@ def main() -> None:
     figures_dir = Path(cfg["output_dir"]) / "figures"
     figures_dir.mkdir(parents=True, exist_ok=True)
 
-    metric_files = sorted(detection_dir.glob("*_metrics.json"))
+    metric_pattern = (
+        "*_metrics.json" if args.attack_prefix == "*" else f"{args.attack_prefix}_*_metrics.json"
+    )
+    score_pattern = (
+        "*_scores.npz" if args.attack_prefix == "*" else f"{args.attack_prefix}_*_scores.npz"
+    )
+
+    metric_files = sorted(detection_dir.glob(metric_pattern))
     if not metric_files:
         LOGGER.warning("No metrics JSON found under %s", detection_dir)
         return
@@ -126,7 +142,7 @@ def main() -> None:
     # ------------------------------------------------------------------
     # Combined ROC / PR for the latest run.
     # ------------------------------------------------------------------
-    score_files = sorted(detection_dir.glob("*_scores.npz"))
+    score_files = sorted(detection_dir.glob(score_pattern))
     if score_files:
         latest = score_files[-1]
         payload = np.load(latest)
