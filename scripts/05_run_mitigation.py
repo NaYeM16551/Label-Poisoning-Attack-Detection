@@ -102,6 +102,7 @@ def main() -> None:
         gamma=cfg["training"]["lr_schedule"]["gamma"],
         device=device,
         num_workers=cfg.get("num_workers", 4),
+        log_every=1,
     )
 
     if args.mode == "none":

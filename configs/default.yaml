@@ -6,7 +6,7 @@
 
 seed: 42
 device: "cuda"        # set to "cpu" if no GPU available
-num_workers: 4
+num_workers: 0
 
 # --------------------------------------------
 # Dataset
