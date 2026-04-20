@@ -5,20 +5,35 @@ with the FLIP repo if you regenerate poisoned datasets.
 """
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
+from src.utils.data import (
+    CIFAR10_MEAN,
+    CIFAR10_STD,
+    CIFAR100_MEAN,
+    CIFAR100_STD,
+)
+
+
+def _dataset_stats(dataset_name: str) -> Tuple[Tuple[float, float, float], Tuple[float, float, float]]:
+    name = dataset_name.lower()
+    if name == "cifar10":
+        return CIFAR10_MEAN, CIFAR10_STD
+    if name == "cifar100":
+        return CIFAR100_MEAN, CIFAR100_STD
+    raise ValueError(f"Unsupported dataset: {dataset_name}")
+
 
 def apply_trigger(images: torch.Tensor, trigger_type: str = "sinusoidal") -> torch.Tensor:
-    """Apply the selected trigger pattern to a batch of normalised images.
+    """Stamp a FLIP trigger onto a batch of images in the raw [0, 1] pixel domain.
 
-    Note: ``images`` are assumed to lie in ``[0, 1]`` (i.e. raw tensors,
-    no ImageNet normalisation). If you have pre-normalised tensors,
-    de-normalise first.
+    Callers with per-channel-normalised tensors must de-normalise before
+    calling this function and re-normalise the result; see ``measure_cta_pta``.
     """
     triggered = images.clone()
     _, c, h, w = triggered.shape
@@ -73,14 +88,25 @@ def measure_cta_pta(
     target_class: int = 4,
     device: str = "cuda",
     batch_size: int = 256,
+    dataset_name: str = "cifar10",
 ) -> Dict[str, float]:
     """Compute Clean Test Accuracy and Poison Test Accuracy.
 
     PTA is measured only on test samples whose true class is *not* the
     target class (per the FLIP paper).
+
+    The loader yields tensors that have already been normalised with the
+    dataset's per-channel mean/std. ``apply_trigger`` operates in the raw
+    [0, 1] pixel domain (that's where FLIP embeds its triggers), so we
+    de-normalise before stamping the trigger and re-normalise before the
+    forward pass.
     """
     model.eval()
     model.to(device)
+
+    mean_t, std_t = _dataset_stats(dataset_name)
+    mean = torch.tensor(mean_t, device=device).view(1, 3, 1, 1)
+    std = torch.tensor(std_t, device=device).view(1, 3, 1, 1)
 
     loader = DataLoader(
         test_dataset,
@@ -107,7 +133,10 @@ def measure_cta_pta(
         non_target_mask = labels != target_class
         if not bool(non_target_mask.any()):
             continue
-        triggered = apply_trigger(images[non_target_mask], trigger_type)
+
+        raw = images[non_target_mask] * std + mean
+        triggered_raw = apply_trigger(raw, trigger_type)
+        triggered = (triggered_raw - mean) / std
         triggered_pred = model(triggered).argmax(dim=1)
         correct_poison += int((triggered_pred == target_class).sum().item())
         total_non_target += int(non_target_mask.sum().item())

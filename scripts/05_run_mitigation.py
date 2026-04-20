@@ -144,6 +144,7 @@ def main() -> None:
         target_class=cfg["attack"]["target_class"],
         device=device,
         batch_size=cfg["training"]["batch_size"],
+        dataset_name=cfg["dataset"]["name"],
     )
     LOGGER.info("CTA=%.4f  PTA=%.4f", metrics["cta"], metrics["pta"])
 
