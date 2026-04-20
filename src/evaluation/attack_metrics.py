@@ -39,11 +39,18 @@ def apply_trigger(images: torch.Tensor, trigger_type: str = "sinusoidal") -> tor
     _, c, h, w = triggered.shape
 
     if trigger_type == "sinusoidal":
+        # Matches FLIP's StripePoisoner defaults (modules/base_utils/datasets.py):
+        #   strength=6 in [0,255] -> 6/255 in [0,1]
+        #   freq=16, horizontal=False -> sine varies along the HEIGHT axis
+        #   argument = np.linspace(0, freq * pi, h)
         amplitude = 6.0 / 255.0
-        frequency = 8.0
-        cols = torch.arange(w, device=triggered.device, dtype=triggered.dtype)
-        noise = amplitude * torch.sin(2 * np.pi * frequency * cols / w)
-        triggered = triggered + noise.view(1, 1, 1, w)
+        freq = 16.0
+        rows = torch.linspace(
+            0.0, freq * float(np.pi), steps=h,
+            device=triggered.device, dtype=triggered.dtype,
+        )
+        noise = amplitude * torch.sin(rows)
+        triggered = triggered + noise.view(1, 1, h, 1)
         triggered = triggered.clamp(0.0, 1.0)
 
     elif trigger_type == "pixel":
